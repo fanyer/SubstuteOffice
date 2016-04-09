@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="Zh-cn">
+  <head>
+    <meta charset="utf-8">
+    <title>ZRender主页的canvas实现</title>
+    
+    <meta name="description" content="ZRender">
+    <meta name="author" content="fanyer101@163.com">
+
+<!-- 基础zrender样式和库 -->
+    <script src="doc/asset/js/esl/esl.js" ></script>
+    <link href="doc/asset/css/zrenderHome.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+    <div class="face" id='face'></div>
+
+   
+   
+    <script>
+        var zr; // 全局可用zrender对象
+        var animationTicket;    // 全局动画索引
+
+        var developMode = false;
+        if (developMode) {
+            // for develop
+            require.config({
+                packages: [
+                    {
+                        name: 'zrender',
+                        location: 'src',
+                        main: 'zrender'
+                    }
+                ]
+            });
+        }
+        else {
+            // 
+            var fileLocation = './doc/asset/js/zrender';
+            require.config({
+                paths:{ 
+                    zrender: fileLocation,
+                    'zrender/shape/Rose': fileLocation,
+                    'zrender/shape/Trochoid': fileLocation,
+                    'zrender/shape/Circle': fileLocation,
+                    'zrender/shape/Sector': fileLocation,
+                    'zrender/shape/Ring': fileLocation,
+                    'zrender/shape/Ellipse': fileLocation,
+                    'zrender/shape/Rectangle': fileLocation,
+                    'zrender/shape/Text': fileLocation,
+                    'zrender/shape/Heart': fileLocation,
+                    'zrender/shape/Droplet': fileLocation,
+                    'zrender/shape/Line': fileLocation,
+                    'zrender/shape/Image': fileLocation,
+                    'zrender/shape/Star': fileLocation,
+                    'zrender/shape/Isogon': fileLocation,
+                    'zrender/shape/BezierCurve': fileLocation,
+                    'zrender/shape/Polyline': fileLocation,
+                    'zrender/shape/Path': fileLocation,
+                    'zrender/shape/Polygon': fileLocation
+                }
+            });
+        }
+
+        
+        require(
+            [
+                'zrender', 
+                'zrender/shape/Line', 
+                'zrender/shape/Text', 
+                'zrender/shape/Circle'
+            ],
+            function (zrender, LineShape, TextShape, CircleShape) {
+                var zr = zrender.init(document.getElementById('face'));
+                var zrColor = require('zrender/tool/color');
+                var colorIdx = 0;
+                var width = Math.ceil(zr.getWidth());
+                var height = Math.ceil(zr.getHeight());
+
+                var i;
+                var n = 50;
+                var shapeList = [];
+                var pos;
+                var len;
+                var xStart;
+                // 动画元素
+                for(i = 0; i < n; i++) {
+                    xStart = -Math.ceil(Math.random() * 1000);
+                    len = Math.ceil(Math.random() * 400);
+                    pos = Math.ceil(Math.random() * height);
+                    shapeList[i] = new LineShape({
+                        id : (new Date() - 1) + '-' + i,
+                        style : {
+                            xStart : xStart,
+                            yStart : pos,
+                            xEnd : xStart + len,
+                            yEnd : pos,
+                            strokeColor : zrColor.random(),
+                            lineWidth : 1
+                        },
+                        _animationX : Math.ceil(Math.random() * 100),
+                        _len : len,
+                        hoverable : false
+                    });
+                    zr.addShape(shapeList[i]);
+                }
+                var aniText = new TextShape({
+                    id : (new Date() - 1) + '-kener',
+                    style : {
+                        x : width / 2,
+                        y : 90,
+                        brushType : 'stroke',
+                        strokeColor : 'rgba(255, 255, 255, 0.2)',
+                        lineWidth : 1,
+                        text : 'ZRender',
+                        textFont : 'bold 60px verdana',
+                        textAlign : 'center'
+                    },
+                    _animationSize : 60,
+                    hoverable:false
+                });
+
+                zr.addShape(aniText);
+
+                zr.addShape(new TextShape({
+                    zlevel : 1,
+                    style : {
+                        x : width / 2,
+                        y : 80,
+                        brushType : 'both',
+                        color : zrColor.getLinearGradient(
+                                    0, 70, 0, 110,
+                                    [[0, '#c7ffbb'],[1,'#00afdd']]
+                                ),
+                        strokeColor : '#ffff77',
+                        lineWidth : 2,
+                        shadowBlur: 15,
+                        shadowColor : 'rgba(255,215,0,0.8)',
+                        text : 'ZRender',
+                        textFont : 'bold 80px "Times New Roman"',
+                        textAlign : 'center'
+                    },
+                    draggable : true
+                }));
+
+                zr.addShape(new TextShape({
+                    shape : 'text',
+                    zlevel : 1,
+                    style : {
+                        x : width / 2,
+                        y : 150,
+                        color : 'rgba(210, 105, 30, 1)',
+                        shadowBlur: 10,
+                        shadowColor : 'rgba(255,215,0,0.8)',
+                        text : '一个轻量级的Canvas类库，MVC封装，数据驱动，提供类Dom事件模型，让canvas绘图大不同！',
+                        textFont : 'normal 18px 微软雅黑',
+                        textAlign : 'center'
+                    }
+                }));
+
+                zr.addShape(new CircleShape({
+                    zlevel : 1,
+                    style : {
+                        x : width / 2,
+                        y : 220,
+                        r : 20,
+                        brushType : 'both',
+                        color : 'rgba(255, 69, 0, 1)',
+                        strokeColor : 'rgba(255, 255, 255, 1)',
+                        lineWidth : 8,
+                        shadowBlur: 20,
+                        shadowColor : 'rgba(255,215,0,0.8)',
+                        text : 'Try',
+                        textPosition : 'inside',
+                        textFont : 'normal 18px 微软雅黑',
+                        textAlign : 'center'
+                    },
+                    
+                }));
+
+
+                // 绘画，利用render的callback可以在绘画完成后马上开始动画
+                zr.render(function(){
+                    animationTicket = setInterval(
+                        function(){
+                            var style;
+                            for( i = 0; i < n; i++) {
+                                // 可以跳过
+                                style = shapeList[i].style;
+
+                                if (style.xStart >= width){
+                                    shapeList[i]._len = Math.ceil(Math.random() * 400);
+                                    shapeList[i].style.xStart = -400;
+                                    shapeList[i].style.xEnd = -400 + shapeList[i]._len;
+                                    shapeList[i].style.yStart = Math.ceil(Math.random() * height);
+                                    shapeList[i].style.yEnd = shapeList[i].style.yStart;
+                                }
+                                shapeList[i].style.xStart += shapeList[i]._animationX;
+                                shapeList[i].style.xEnd += shapeList[i]._animationX;
+
+                                // 就看这句就行了
+                                zr.modShape(shapeList[i].id, shapeList[i]);
+                            }
+                            aniText._animationSize += Math.round(2000 / aniText._animationSize);
+                            if (aniText._animationSize > 500) {
+                                aniText._animationSize = 60;
+                            }
+                            aniText.style.textFont = 'bold ' + aniText._animationSize + 'px verdana';
+                            zr.modShape(aniText.id, aniText);
+
+                            zr.refresh();
+                        },
+                        50
+                    )
+                });
+            }
+        );
+    </script>
+  </body>
+</html>
